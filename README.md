@@ -1,3 +1,7 @@
+![GitHub repo file or directory count](https://img.shields.io/github/directory-file-count/voluminor/openwebui-ollama-proxy?color=orange)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/voluminor/openwebui-ollama-proxy?color=green)
+![GitHub repo size](https://img.shields.io/github/repo-size/voluminor/openwebui-ollama-proxy)
+
 🇷🇺 [Русская версия](README.RU.md)
 
 # openwebui-ollama-proxy
